@@ -14,7 +14,6 @@ model User {
   username        String        @unique @db.VarChar(50)
   passwordHash    String        @map("password_hash") @db.VarChar(255)
   role            UserRole
-  email           String        @unique @db.VarChar(255)
   active          Boolean       @default(true)
   createdOn       DateTime      @default(now()) @map("created_on")
   updatedOn       DateTime?     @map("updated_on")
