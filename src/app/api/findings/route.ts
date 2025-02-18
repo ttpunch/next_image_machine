@@ -8,6 +8,8 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     
+    console.log('Session:', session); // Debug log
+
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -49,6 +51,8 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     
+    console.log('Session:', session); // Debug log
+
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },

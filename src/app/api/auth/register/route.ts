@@ -1,48 +1,42 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/app/lib/db";
-import { UserRole } from "@prisma/client";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/app/lib/db';
+import bcrypt from 'bcryptjs';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { username, password, role, active } = await req.json();
+    const data = await request.json();
 
-    if (!username || !password) {
+    if (!data.username || !data.email || !data.password) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { message: "Username, email, and password are required" },
         { status: 400 }
       );
     }
 
-    // Check if username already exists
     const existingUser = await prisma.user.findUnique({
-      where: { username },
+      where: { email: data.email },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { message: "Username already exists" },
+        { message: "Email already exists" },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Create user
-    const user = await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
-        username,
-        passwordHash,
-        role: role as UserRole,
-        active,
+        username: data.username,
+        email: data.email,
+        passwordHash: hashedPassword,
+        role: data.role || "USER",
+        active: data.active !== undefined ? data.active : true,
       },
     });
 
-    return NextResponse.json(
-      { message: "User created successfully" },
-      { status: 201 }
-    );
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
@@ -50,4 +44,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-} 
+}
