@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { saltAndHashPassword } from "@/utils/password";
 import { getUserFromDb } from "@/utils/db"; // Assuming you have a function to fetch user from the database
+import { UserRole } from "@prisma/client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -10,7 +11,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, req) => {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
         }
@@ -28,11 +29,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("Invalid credentials");
           }
 
-          // Return user object with their profile data
-          return user;
+          // Ensure the user object has an id of type string and role of type UserRole
+          return { ...user, id: user.id.toString(), role: user.role as UserRole };
         } catch (error) {
           console.error("Error during authorization:", error);
-          throw new Error("Authentication failed");
+          return null;
         }
       },
     }),
@@ -52,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   // Optional: Add pages configuration if you want to customize the default pages
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/sign-in",
     error: "/auth/error",
   },
   // Optional: Add secret for encryption
