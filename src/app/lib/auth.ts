@@ -1,90 +1,76 @@
-import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from '@/app/lib/db'
-import { UserRole } from "@prisma/client";
+import { compare } from "bcryptjs";
+import { prisma } from "@/app/lib/db";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("Missing username or password");
+          throw new Error("Missing credentials");
         }
 
-        try {
-          const user = await prisma.user.findUnique({
-            where: {
-              username: credentials.username,
-            },
-            select: {
-              id: true,
-              username: true,
-              passwordHash: true,
-              role: true,
-              active: true,
-            },
-          });
+        const user = await prisma.user.findUnique({
+          where: {
+            username: credentials.username,
+          },
+        });
 
-          if (!user) {
-            throw new Error("No user found with this username");
-          }
-
-          if (!user.active) {
-            throw new Error("User account is inactive");
-          }
-
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.passwordHash
-          );
-
-          if (!isValid) {
-            throw new Error("Invalid password");
-          }
-
-          return {
-            id: user.id.toString(),
-            username: user.username,
-            role: user.role,
-          };
-        } catch (error) {
-          console.error("Auth error:", error);
-          throw error;
+        if (!user) {
+          throw new Error("User not found");
         }
-      },
-    }),
+
+        // Assuming your schema uses 'passwordHash' for storing hashed passwords
+        const isPasswordValid = await compare(credentials.password, user.password);
+
+        if (!isPasswordValid) {
+          throw new Error("Invalid password");
+        }
+
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        };
+      }
+    })
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.username = user.username;
+        token.email = user.email;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.username = token.username;
-        session.user.role = token.role as UserRole;
+      if (token) {
+        session.user = {
+          ...session.user,
+          id: token.id,
+          username: token.username,
+          email: token.email,
+          role: token.role,
+        };
       }
       return session;
-    },
+    }
   },
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: '/auth/login',
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+

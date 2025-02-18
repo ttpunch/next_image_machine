@@ -1,239 +1,94 @@
-// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Change to "mysql" or "sqlite" if needed
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-  previewFeatures = ["views"]
-}
-
 model User {
-  id              Int           @id @default(autoincrement())
-  username        String        @unique @db.VarChar(50)
-  passwordHash    String        @map("password_hash") @db.VarChar(255)
-  role            UserRole
-  active          Boolean       @default(true)
-  createdOn       DateTime      @default(now()) @map("created_on")
-  updatedOn       DateTime?     @map("updated_on")
-  findings        Finding[]     @relation("FindingCreator")
-  updatedFindings Finding[]     @relation("FindingUpdater")
-  comments        Comment[]     @relation("CommentCreator")
-  updatedComments Comment[]     @relation("CommentUpdater")
-  attachments     Attachment[]
-  notifications   Notification[]
-  auditLogs       AuditLog[]
-  createdTags     Tag[]
-  findingTags     FindingTag[]
-  reports         Report[]
-  createdMachines Machine[]    @relation("MachineCreator")
-  updatedMachines Machine[]    @relation("MachineUpdater")
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 
-  @@map("users")
+  records   Record[] 
+  comments  Comment[] 
+
+  Attachment Attachment[]
 }
 
 model Machine {
-  id            Int       @id @default(autoincrement())
-  machineNumber String    @unique @map("machine_number") @db.VarChar(50)
-  status        MachineStatus
-  createdOn     DateTime  @default(now()) @map("created_on")
-  updatedOn     DateTime? @map("updated_on")
-  createdBy     Int       @map("created_by")
-  updatedBy     Int?      @map("updated_by")
-  findings      Finding[]
-  creator       User      @relation("MachineCreator", fields: [createdBy], references: [id])
-  updater       User?     @relation("MachineUpdater", fields: [updatedBy], references: [id])
+  id        String   @id @default(uuid())
+  number    String   @unique
+  name      String
+  location  String?
+  createdAt DateTime @default(now())
 
-  @@map("machines")
+  records   Record[]
 }
 
-model Finding {
-  id              Int           @id @default(autoincrement())
-  machineId       Int          @map("machine_id")
-  textDescription String       @map("text_description") @db.Text
-  status          FindingStatus
-  severity        Severity
-  createdOn       DateTime     @default(now()) @map("created_on")
-  updatedOn       DateTime?    @map("updated_on")
-  createdBy       Int          @map("created_by")
-  updatedBy       Int?         @map("updated_by")
-  machine         Machine      @relation(fields: [machineId], references: [id])
-  creator         User         @relation("FindingCreator", fields: [createdBy], references: [id])
-  updater         User?        @relation("FindingUpdater", fields: [updatedBy], references: [id])
-  attachments     Attachment[]
-  comments        Comment[]
-  findingTags     FindingTag[]
+model Record {
+  id          String    @id @default(uuid())
+  machineId   String
+  machine     Machine   @relation(fields: [machineId], references: [id])
+  imageUrl    String
+  description String
+  createdBy   String
+  user        User      @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  @@map("findings")
-}
-
-model Attachment {
-  id          Int      @id @default(autoincrement())
-  findingId   Int      @map("finding_id")
-  fileName    String   @map("file_name") @db.VarChar(255)
-  filePath    String   @map("file_path") @db.VarChar(255)
-  fileSize    BigInt   @map("file_size")
-  fileType    String   @map("file_type") @db.VarChar(100)
-  uploadedOn  DateTime @default(now()) @map("uploaded_on")
-  uploadedBy  Int      @map("uploaded_by")
-  finding     Finding  @relation(fields: [findingId], references: [id])
-  uploader    User     @relation(fields: [uploadedBy], references: [id])
-
-  @@map("attachments")
-}
-
-model Comment {
-  id          Int       @id @default(autoincrement())
-  findingId   Int       @map("finding_id")
-  commentText String    @map("comment_text") @db.Text
-  createdOn   DateTime  @default(now()) @map("created_on")
-  updatedOn   DateTime? @map("updated_on")
-  createdBy   Int       @map("created_by")
-  updatedBy   Int?      @map("updated_by")
-  mediaType   String?   @map("media_type") @db.VarChar(50)
-  mediaPath   String?   @map("media_path") @db.VarChar(255)
-  finding     Finding   @relation(fields: [findingId], references: [id])
-  creator     User      @relation("CommentCreator", fields: [createdBy], references: [id])
-  updater     User?     @relation("CommentUpdater", fields: [updatedBy], references: [id])
-
-  @@map("comments")
-}
-
-model Notification {
-  id              Int              @id @default(autoincrement())
-  userId          Int              @map("user_id")
-  message         String           @db.Text
-  notificationType NotificationType @map("notification_type")
-  isRead          Boolean          @default(false) @map("is_read")
-  createdOn       DateTime         @default(now()) @map("created_on")
-  readOn          DateTime?        @map("read_on")
-  user            User             @relation(fields: [userId], references: [id])
-
-  @@map("notifications")
-}
-
-model AuditLog {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @map("user_id")
-  action          String   @db.VarChar(255)
-  actionDetails   Json     @map("action_details")
-  ipAddress       String?  @map("ip_address")
-  userAgent       String?  @map("user_agent") @db.VarChar(255)
-  actionTimestamp DateTime @default(now()) @map("action_timestamp")
-  user            User     @relation(fields: [userId], references: [id])
-
-  @@map("audit_logs")
+  tags        RecordTag[]  
+  comments    Comment[]  
+  attachments Attachment[]  
 }
 
 model Tag {
-  id          Int          @id @default(autoincrement())
-  tagName     String       @unique @map("tag_name") @db.VarChar(50)
-  description String?      @db.Text
-  createdOn   DateTime     @default(now()) @map("created_on")
-  createdBy   Int         @map("created_by")
-  creator     User        @relation(fields: [createdBy], references: [id])
-  findingTags FindingTag[]
-
-  @@map("tags")
+  id        String     @id @default(uuid())
+  name      String     @unique
+  records   RecordTag[] 
 }
 
-model FindingTag {
-  findingId Int      @map("finding_id")
-  tagId     Int      @map("tag_id")
-  createdOn DateTime @default(now()) @map("created_on")
-  createdBy Int      @map("created_by")
-  finding   Finding  @relation(fields: [findingId], references: [id])
-  tag       Tag      @relation(fields: [tagId], references: [id])
-  creator   User     @relation(fields: [createdBy], references: [id])
+model RecordTag {
+  recordId String
+  tagId    String
 
-  @@id([findingId, tagId])
-  @@map("finding_tags")
+  record   Record @relation(fields: [recordId], references: [id])
+  tag      Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([recordId, tagId]) 
 }
 
-model Report {
-  id            Int         @id @default(autoincrement())
-  reportName    String      @map("report_name") @db.VarChar(255)
-  reportType    ReportType  @map("report_type")
-  parameters    Json?
-  generatedOn   DateTime    @default(now()) @map("generated_on")
-  generatedBy   Int         @map("generated_by")
-  filePath      String?     @map("file_path") @db.VarChar(255)
-  status        ReportStatus
-  scheduleConfig Json?      @map("schedule_config")
-  generator     User        @relation(fields: [generatedBy], references: [id])
+model Comment {
+  id        String   @id @default(uuid())
+  recordId  String
+  userId    String
+  comment   String
+  createdAt DateTime @default(now())
 
-  @@map("reports")
+  record    Record   @relation(fields: [recordId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-// Views
-view MachineStatusSummary {
-  status           MachineStatus
-  machineCount     Int           @map("machine_count")
-  totalFindings    Int           @map("total_findings")
-  criticalFindings Int           @map("critical_findings")
-  openFindings     Int           @map("open_findings")
+model Attachment {
+  id        String   @id @default(uuid())
+  recordId  String
+  fileUrl   String
+  fileType  AttachmentType
+  uploadedBy String
+  uploadedAt DateTime @default(now())
 
-  @@map("mv_machine_status_summary")
-  @@id([status])
+  record    Record   @relation(fields: [recordId], references: [id])
+  user      User     @relation(fields: [uploadedBy], references: [id])
 }
 
-view FindingTrends {
-  date                DateTime
-  severity           Severity
-  status            FindingStatus
-  findingCount      Int            @map("finding_count")
-  avgResolutionTime Decimal        @map("avg_resolution_time_hours")
-
-  @@map("mv_finding_trends")
-  @@id([date, severity, status])
-}
-
-// Enums
-enum UserRole {
-  ADMIN
-  USER
-  MANAGER
-  TECHNICIAN
-}
-
-enum MachineStatus {
-  ACTIVE
-  INACTIVE
-  MAINTENANCE
-  RETIRED
-}
-
-enum FindingStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
-}
-
-enum Severity {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum NotificationType {
-  ALERT
-  INFO
-  WARNING
-  SUCCESS
-}
-
-enum ReportType {
-  DAILY
-  WEEKLY
-  MONTHLY
-  CUSTOM
-}
-
-enum ReportStatus {
-  PENDING
-  COMPLETED
-  FAILED
+enum AttachmentType {
+  PDF
+  LOG
+  EXCEL
+  JPEG
+  PNG
 }
