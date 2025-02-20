@@ -8,11 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  username    String    @unique
+  email       String    @unique
+  password    String
+  role        UserRole  @default(USER)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   records   Record[] 
   comments  Comment[] 
@@ -91,4 +94,10 @@ enum AttachmentType {
   EXCEL
   JPEG
   PNG
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  TECHNICIAN
 }

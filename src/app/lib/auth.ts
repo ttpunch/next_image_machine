@@ -1,9 +1,10 @@
-import NextAuth from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
 
-export const authOptions = {
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -11,33 +12,39 @@ export const authOptions = {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          throw new Error("Missing credentials");
+      async authorize(credentials): Promise<any> {
+        try {
+          if (!credentials?.username || !credentials?.password) {
+            throw new Error("Missing credentials");
+          }
+
+          const user = await prisma.user.findUnique({
+            where: { username: credentials.username },
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              password: true,
+              role: true
+            }
+          });
+
+          if (!user) {
+            throw new Error("User not found");
+          }
+
+          const isPasswordValid = await compare(credentials.password, user.password);
+
+          if (!isPasswordValid) {
+            throw new Error("Invalid password");
+          }
+
+          const { password, ...userWithoutPass } = user;
+          return userWithoutPass;
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            username: credentials.username,
-          },
-        });
-
-        if (!user) {
-          throw new Error("User not found");
-        }
-
-        // Assuming your schema uses 'passwordHash' for storing hashed passwords
-        const isPasswordValid = await compare(credentials.password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid password");
-        }
-
-        return {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        };
       }
     })
   ],
@@ -46,31 +53,27 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.username = user.username;
-        token.email = user.email;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user = {
-          ...session.user,
-          id: token.id,
-          username: token.username,
-          email: token.email,
-          role: token.role,
-        };
+        session.user.id = token.id;
+        session.user.username = token.username;
+        session.user.role = token.role;
       }
       return session;
     }
   },
   pages: {
-    signIn: '/auth/login',
+    signIn: '/sign-in',
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 24 hours
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-do-not-use-in-production",
+  debug: process.env.NODE_ENV === 'development',
 };
 

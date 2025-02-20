@@ -1,110 +1,167 @@
-import React, { useState } from 'react';
+"use client"
 
-function AddRecordForm({ onSubmit, machineId, userId }) {
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { createRecord } from '../actions';
+
+
+interface Record {
+  id: string;
+  machineNumber: string;
+  imageUrl: string;
+  description: string;
+  tags: string[];
+  createdOn: string;
+}
+
+interface AddRecordFormProps {
+  onSubmit: (record: Record) => void;
+  onCancel: () => void;
+}
+
+export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps) {
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
-    textDescription: '',
-    status: 'OPEN',
-    severity: 'MEDIUM',
+    machineNumber: '',
+    description: '',
     tags: '',
+    image: null as File | null,
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/findings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          machineId: parseInt(machineId),
-          textDescription: formData.textDescription,
-          status: formData.status,
-          severity: formData.severity,
-          createdBy: userId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create finding');
+      if (status !== 'authenticated' || !session?.user?.id) {
+        throw new Error('Authentication required');
       }
 
-      const newFinding = await response.json();
-      onSubmit(newFinding);
-      
-      setFormData({
-        textDescription: '',
-        status: 'OPEN',
-        severity: 'MEDIUM',
-        tags: '',
+      // Handle image upload first if there's an image
+      let imageUrl = '';
+      if (formData.image) {
+        const imageData = new FormData();
+        imageData.append('file', formData.image);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: imageData,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || 'Failed to upload image');
+        }
+        imageUrl = uploadResult.url;
+      }
+
+      const result = await createRecord({
+        machineNumber: formData.machineNumber,
+        description: formData.description,
+        tags: formData.tags,
+        imageUrl: imageUrl,
+        userId: ''
       });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      setFormData({
+        machineNumber: '',
+        description: '',
+        tags: '',
+        image: null,
+      });
+
+      if (result.data) {
+        onSubmit(result.data as unknown as Record);
+      }
     } catch (error) {
-      console.error('Error creating finding:', error);
-      alert('Failed to create finding. Please try again.');
+      console.error('Error creating record:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create record');
     } finally {
       setIsLoading(false);
     }
-  };
+};
 
   return (
-    <form 
-      className="max-w-2xl mx-auto p-6 space-y-4 bg-white rounded-lg shadow-lg"
-      onSubmit={handleSubmit}
-    >
-      <textarea
-        placeholder="Finding Description..."
-        value={formData.textDescription}
-        onChange={(e) => setFormData({ ...formData, textDescription: e.target.value })}
-        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <input
+        type="text"
+        placeholder="Machine Number"
+        value={formData.machineNumber}
+        onChange={(e) => setFormData({ ...formData, machineNumber: e.target.value })}
+        className="w-full px-4 py-2 border rounded-lg bg-white text-black"
         required
       />
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="block text-sm text-gray-600">Status</label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div className="flex gap-4">
+        <div className="w-32">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+            className="hidden"
+            id="image-upload"
+          />
+          <label
+            htmlFor="image-upload"
+            className="w-full aspect-square border rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-700"
           >
-            <option value="OPEN">Open</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="CLOSED">Closed</option>
-          </select>
+            {formData.image ? (
+              <img
+                src={URL.createObjectURL(formData.image)}
+                alt="Preview"
+                className="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <div className="text-black bg-white w-full h-full flex items-center justify-center rounded-lg">
+                Add Image
+              </div>
+            )}
+          </label>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm text-gray-600">Severity</label>
-          <select
-            value={formData.severity}
-            onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="CRITICAL">Critical</option>
-          </select>
-        </div>
+        <textarea
+          placeholder="Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="flex-1 p-2 border rounded-lg bg-white text-black"
+          required
+        />
+
+        <input
+          type="text"
+          placeholder="Tags (comma separated)"
+          value={formData.tags}
+          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+          className="w-32 px-4 py-2 border rounded-lg bg-white text-black"
+        />
       </div>
 
-      <button 
-        type="submit"
-        disabled={isLoading}
-        className={`w-full py-2 bg-blue-600 text-white rounded-lg transition-colors ${
-          isLoading 
-            ? 'opacity-50 cursor-not-allowed' 
-            : 'hover:bg-blue-700'
-        }`}
-      >
-        {isLoading ? 'Adding Finding...' : 'Add Finding'}
-      </button>
+      <div className="flex justify-end gap-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border rounded-lg bg-white text-black hover:bg-gray-100 transition-colors"
+          disabled={isLoading}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 border rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Adding...' : 'Add Record'}
+        </button>
+      </div>
     </form>
   );
 }
-
-export default AddRecordForm;

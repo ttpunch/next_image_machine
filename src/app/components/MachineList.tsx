@@ -1,35 +1,58 @@
-import React from 'react';
 import RecordCard from './RecordCard';
 
-function MachineList({ findings, viewMode }) {
-  const groupedFindings = findings.reduce((acc, finding) => {
+interface Record {
+  id: string;
+  machineNumber: string;
+  imageUrl: string;
+  description: string;
+  tags: Array<{
+    recordId: string;
+    tagId: string;
+    tag: {
+      name: string;
+    };
+  }>;
+  createdOn: string;
+}
+
+interface MachineListProps {
+  records: Record[];
+  viewMode: 'machine' | 'tag';
+}
+
+type GroupedRecords = {
+  [key: string]: Record[];
+};
+
+export default function MachineList({ records, viewMode }: MachineListProps) {
+  const groupedRecords = records.reduce<GroupedRecords>((acc, record) => {
     if (viewMode === 'machine') {
-      const key = finding.machine.machineNumber;
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(finding);
+      const key = record.machineNumber;
+      acc[key] = acc[key] || [];
+      acc[key].push(record);
     } else {
-      finding.findingTags.forEach(({ tag }) => {
-        if (!acc[tag.tagName]) {
-          acc[tag.tagName] = [];
+      // Group by tags
+      record.tags.forEach(tagObj => {
+        const key = tagObj.tag.name;
+        acc[key] = acc[key] || [];
+        if (!acc[key].find(r => r.id === record.id)) {
+          acc[key].push(record);
         }
-        acc[tag.tagName].push(finding);
       });
     }
     return acc;
   }, {});
 
   return (
-    <div className="space-y-8">
-      {Object.entries(groupedFindings).map(([key, groupFindings]) => (
-        <div key={key} className="border rounded-lg p-6 space-y-4">
-          <h2 className="text-xl font-semibold">
-            {viewMode === 'machine' ? `Machine ${key}` : `Tag: ${key}`}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groupFindings.map(finding => (
-              <RecordCard key={finding.id} finding={finding} />
+    <div className="space-y-4">
+      {Object.entries(groupedRecords).map(([groupKey, groupRecords]) => (
+        <div key={groupKey} className="border rounded-lg p-4">
+          <div className="text-lg font-semibold mb-4">
+            {viewMode === 'machine' ? `Machine Number: ${groupKey}` : `Tag: ${groupKey}`}
+          </div>
+          <div className="space-y-4">
+            {groupRecords.map((record) => (
+              <RecordCard key={record.id} record={record} />
             ))}
           </div>
         </div>
@@ -37,5 +60,3 @@ function MachineList({ findings, viewMode }) {
     </div>
   );
 }
-
-export default MachineList;

@@ -1,9 +1,9 @@
 "use client"
 import { useState } from 'react';
-import SearchBar from '../components/SearchBar';
-import MachineList from '../components/MachineList';
-import AddRecordForm from '../components/AddRecordForm';
-import UserDetails from '../components/UserDetails';
+import SearchBar from './SearchBar';
+import MachineList from './MachineList';
+import AddRecordForm from './AddRecordForm';
+import UserDetails from './UserDetails';
 
 interface Record {
   id: string;
@@ -73,7 +73,17 @@ export default function Dashboard() {
         </div>
 
         {/* Records List */}
-        <MachineList records={searchResults} viewMode={viewMode} /> {/* Fixed prop name */}
+        <MachineList 
+          records={searchResults.map(record => ({
+            ...record,
+            tags: record.tags.map(tagName => ({
+              recordId: record.id,
+              tagId: `tag-${tagName}`,
+              tag: { name: tagName }
+            }))
+          }))} 
+          viewMode={viewMode}
+        /> {/* Fixed prop name */}
 
         {/* Add Record Modal */}
         {showAddRecord && (

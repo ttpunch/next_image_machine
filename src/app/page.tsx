@@ -7,52 +7,53 @@ import AddRecordForm from '@/app/components/AddRecordForm';
 import SearchBar from '@/app/components/SearchBar';
 import UserDetails from '@/app/components/UserDetails';
 
+interface Record {
+  id: string;
+  machineNumber: string;
+  imageUrl: string;
+  description: string;
+  tags: string[];
+  createdOn: string;
+}
+
 export default function Home() {
   const { data: session, status } = useSession();
-  interface Finding {
-    machine: {
-      machineNumber: string;
-    };
-    textDescription: string;
-    findingTags: { tag: { tagName: string } }[];
-  }
-
-  const [findings, setFindings] = useState<Finding[]>([]);
-  const [filteredFindings, setFilteredFindings] = useState<Finding[]>([]);
-  const [viewMode, setViewMode] = useState('machine');
+  const [records, setRecords] = useState<Record[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
+  const [viewMode, setViewMode] = useState<'machine' | 'tag'>('machine');
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchFindings();
+      fetchRecords();
     }
   }, [status]);
 
-  const fetchFindings = async () => {
+  const fetchRecords = async () => {
     try {
-      const response = await fetch('/api/findings');
-      if (!response.ok) throw new Error('Failed to fetch findings');
+      const response = await fetch('/api/records');
+      if (!response.ok) throw new Error('Failed to fetch records');
       const data = await response.json();
-      setFindings(data);
-      setFilteredFindings(data);
+      setRecords(data);
+      setFilteredRecords(data);
     } catch (error) {
-      console.error('Error fetching findings:', error);
+      console.error('Error fetching records:', error);
     }
   };
 
   const handleSearch = (searchTerm: string) => {
-    const filtered = findings.filter((finding) =>
-      finding.machine.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      finding.textDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      finding.findingTags.some(({ tag }) =>
-        tag.tagName.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = records.filter((record) =>
+      record.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.tags.some(tag => 
+        tag.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-    setFilteredFindings(filtered);
+    setFilteredRecords(filtered);
   };
 
-  const handleAddFinding = async () => {
-    await fetchFindings();
+  const handleAddRecord = async (newRecord: Record) => {
+    await fetchRecords();
     setShowAddForm(false);
   };
 
@@ -66,6 +67,16 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <UserDetails />
+        <button
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          {showAddForm ? 'Cancel' : 'Add Record'}
+        </button>
+      </div>
+
       <div className="flex gap-4">
         <button
           className={`px-4 py-2 rounded-lg border ${
@@ -91,25 +102,28 @@ export default function Home() {
 
       <SearchBar onSearch={handleSearch} />
 
-      <button
-        className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        onClick={() => setShowAddForm(!showAddForm)}
-      >
-        {showAddForm ? 'Cancel' : 'Add Finding'}
-      </button>
-
       {showAddForm && (
-        <AddRecordForm
-          onSubmit={handleAddFinding}
-          userId={session?.user?.id} // Use actual user ID from session
-          machineId={1} // Replace with selected machine ID
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-black">Add New Record</h2>
+              <button 
+                onClick={() => setShowAddForm(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <AddRecordForm
+              onSubmit={handleAddRecord}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+        </div>
       )}
 
-      <UserDetails />
-
       <MachineList
-        findings={filteredFindings}
+        records={filteredRecords}
         viewMode={viewMode}
       />
     </div>
