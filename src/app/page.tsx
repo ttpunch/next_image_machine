@@ -12,7 +12,13 @@ interface Record {
   machineNumber: string;
   imageUrl: string;
   description: string;
-  tags: string[];
+  tags: Array<{
+    recordId: string;
+    tagId: string;
+    tag: {
+      name: string;
+    };
+  }>;
   createdOn: string;
 }
 
@@ -42,18 +48,23 @@ export default function Home() {
   };
 
   const handleSearch = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
+
     const filtered = records.filter((record) =>
       record.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.tags.some(tag => 
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
+      record.tags.some(tagObj => 
+        tagObj.tag.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
     setFilteredRecords(filtered);
   };
 
-  const handleAddRecord = async (newRecord: Record) => {
-    await fetchRecords();
+  const handleAddRecord = (newRecord: Record) => {
+    fetchRecords(); // Remove async/await since onSubmit doesn't expect a Promise
     setShowAddForm(false);
   };
 

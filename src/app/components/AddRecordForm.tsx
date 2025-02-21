@@ -5,12 +5,19 @@ import { useSession } from 'next-auth/react';
 import { createRecord } from '../actions';
 
 
+// Update the Record interface to match the one in page.tsx
 interface Record {
   id: string;
   machineNumber: string;
   imageUrl: string;
   description: string;
-  tags: string[];
+  tags: Array<{
+    recordId: string;
+    tagId: string;
+    tag: {
+      name: string;
+    };
+  }>;
   createdOn: string;
 }
 

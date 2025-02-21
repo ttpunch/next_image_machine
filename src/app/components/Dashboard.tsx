@@ -1,101 +1,95 @@
 "use client"
-import { useState } from 'react';
-import SearchBar from './SearchBar';
-import MachineList from './MachineList';
-import AddRecordForm from './AddRecordForm';
-import UserDetails from './UserDetails';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import SearchBar from '../components/SearchBar';
+import MachineList from '../components/MachineList';
+import AddRecordForm from '../components/AddRecordForm';
+import UserDetails from '../components/UserDetails';
 
 interface Record {
   id: string;
   machineNumber: string;
   imageUrl: string;
   description: string;
-  tags: string[];
+  tags: Array<{
+    recordId: string;
+    tagId: string;
+    tag: {
+      name: string;
+    };
+  }>;
   createdOn: string;
 }
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
   const [viewMode, setViewMode] = useState<'machine' | 'tag'>('machine');
   const [showAddRecord, setShowAddRecord] = useState(false);
-  const [searchResults, setSearchResults] = useState<Record[]>([]); // Fixed type
+  const [records, setRecords] = useState<Record[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
 
-  const handleSearch = (searchTerm: string) => {
-    // Implement search logic here
-    console.log('Searching for:', searchTerm);
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchRecords();
+    }
+  }, [status]);
+
+  const fetchRecords = async () => {
+    try {
+      const response = await fetch('/api/records');
+      if (!response.ok) throw new Error('Failed to fetch records');
+      const data = await response.json();
+      setRecords(data);
+      setFilteredRecords(data);
+    } catch (error) {
+      console.error('Error fetching records:', error);
+    }
   };
 
-  const handleAddRecord = (record: Record) => {
-    setSearchResults(prev => [...prev, record]);
+  const handleSearch = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
+
+    const filtered = records.filter((record) =>
+      record.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.tags.some(tagObj => 
+        tagObj.tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+    setFilteredRecords(filtered);
+  };
+
+  const handleAddRecord = async (record: Record) => {
+    await fetchRecords();
     setShowAddRecord(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <UserDetails />
-          <button 
-            onClick={() => setShowAddRecord(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Add Record
-          </button>
-        </div>
-
-        {/* View Mode Toggles */}
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={() => setViewMode('machine')}
-            className={`px-4 py-2 rounded-lg ${
-              viewMode === 'machine' 
-                ? 'bg-gray-800 text-white' 
-                : 'bg-white text-gray-800'
-            }`}
-          >
-            Machine Wise
-          </button>
-          <button
-            onClick={() => setViewMode('tag')}
-            className={`px-4 py-2 rounded-lg ${
-              viewMode === 'tag' 
-                ? 'bg-gray-800 text-white' 
-                : 'bg-white text-gray-800'
-            }`}
-          >
-            Tag Wise
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <SearchBar onSearch={handleSearch} />
-        </div>
-
-        {/* Records List */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
+      <div className="container mx-auto px-6 py-8">
+        {/* Rest of your UI components */}
         <MachineList 
-          records={searchResults.map(record => ({
-            ...record,
-            tags: record.tags.map(tagName => ({
-              recordId: record.id,
-              tagId: `tag-${tagName}`,
-              tag: { name: tagName }
-            }))
-          }))} 
+          records={filteredRecords} 
           viewMode={viewMode}
-        /> {/* Fixed prop name */}
-
-        {/* Add Record Modal */}
+        />
+        
         {showAddRecord && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Add New Record</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Add New Record
+                </h2>
                 <button 
                   onClick={() => setShowAddRecord(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  ✕
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
               <AddRecordForm 

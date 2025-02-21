@@ -75,3 +75,55 @@ export async function createRecord(data: CreateRecordInput) {
   }
 }
 
+export async function fetchRecords() {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    const records = await prisma.record.findMany({
+      where: {
+        createdBy: session.user.id
+      },
+      include: {
+        machine: true,
+        tags: {
+          include: {
+            tag: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return { 
+      success: true, 
+      data: records.map(record => ({
+        id: record.id,
+        machineNumber: record.machine.number,
+        imageUrl: record.imageUrl,
+        description: record.description,
+        tags: record.tags.map(tag => ({
+          recordId: tag.recordId,
+          tagId: tag.tagId,
+          tag: {
+            name: tag.tag.name
+          }
+        })),
+        createdOn: record.createdAt.toISOString()
+      }))
+    };
+
+  } catch (error) {
+    console.error('Error fetching records:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to fetch records'
+    };
+  }
+}
+
