@@ -9,6 +9,8 @@ import UserDetails from '../components/UserDetails';
 import SkeletonLoader from '../components/SkeletonLoader';
 import PdfUpload from '../components/PdfUpload';
 
+import GoogleDriveUpload from '../components/GoogleDriveUpload';
+
 interface Record {
   id: string;
   machineNumber: string;
@@ -85,6 +87,10 @@ export default function Dashboard() {
         <div className="text-xl">Please sign in to access this page</div>
       </div>
     );
+  }
+
+  function setPdfUrl(url: string) {
+    throw new Error('Function not implemented.');
   }
 
   return (
@@ -185,6 +191,10 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        // Add state for PDF URL
+        const [pdfUrl, setPdfUrl] = useState('');
+
+        // Update the upload modal content
         {showUpload && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -200,19 +210,37 @@ export default function Dashboard() {
                 </button>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex justify-center">
-                  <PdfUpload
-                    value=""
-                    onChange={(url) => {
-                      // Handle the uploaded PDF URL
-                      console.log('PDF uploaded:', url);
-                      setShowUpload(false);
-                    }}
-                  />
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to Cloudinary</h3>
+                  <div className="flex justify-center">
+                    <PdfUpload
+                      value=""
+                      onChange={(url) => {
+                        setPdfUrl(url);
+                        console.log('PDF uploaded to Cloudinary:', url);
+                        setShowUpload(false);
+                      }}
+                    />
+                  </div>
                 </div>
+
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to Google Drive</h3>
+                  <div className="flex justify-center">
+                    <GoogleDriveUpload
+                      value=""
+                      onChange={(url) => {
+                        setPdfUrl(url);
+                        console.log('PDF uploaded to Google Drive:', url);
+                        setShowUpload(false);
+                      }}
+                    />
+                  </div>
+                </div>
+
                 <p className="text-sm text-gray-500 text-center">
-                  Click to upload or drag and drop your PDF file here
+                  Choose your preferred upload method
                 </p>
               </div>
             </div>
