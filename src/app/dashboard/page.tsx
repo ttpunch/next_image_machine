@@ -6,15 +6,15 @@ import SearchBar from '../components/SearchBar';
 import MachineList from '../components/MachineList';
 import AddRecordForm from '../components/AddRecordForm';
 import UserDetails from '../components/UserDetails';
-import { ClientPageRoot } from 'next/dist/client/components/client-page';
-import { Console } from 'console';
+import SkeletonLoader from '../components/SkeletonLoader';
+import PdfUpload from '../components/PdfUpload';
 
 interface Record {
   id: string;
   machineNumber: string;
   imageUrl: string;
   description: string;
-  tags: string[] 
+  tags: string[];
   createdOn: string;
 }
 
@@ -24,17 +24,9 @@ export default function Dashboard() {
   const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
   const [viewMode, setViewMode] = useState<'machine' | 'tag'>('machine');
   const [showAddRecord, setShowAddRecord] = useState(false);
-  const [searchResults, setSearchResults] = useState<Record[]>([]); // Fixed type
+  const [showUpload, setShowUpload] = useState(false);
 
-  const handleSearch = (searchTerm: string) => {
-    // Implement search logic here
-    console.log('Searching for:', searchTerm);
-  };
-
-  const handleAddRecord = (record: Record) => {
-    setSearchResults(prev => [...prev, record]);
-    setShowAddRecord(false);
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -43,42 +35,90 @@ export default function Dashboard() {
   }, [status]);
 
   const loadRecords = async () => {
+    setLoading(true);
     const result = await fetchRecords();
-    console.log(result);
     if (result.success && result.data) {
-      // Transform the data to match the Record interface by extracting tag names
-      const transformedData = result.data.map(record => ({
+      const formattedRecords = result.data.map(record => ({
         ...record,
-        tags: record.tags.map(tag => tag.tag.name)
-       
+        tags: record.tags.map(tag => 
+          typeof tag === 'object' ? tag.tag.name : tag
+        )
       }));
-
-      console.log("trasnsformed data;",transformedData);
-     
-      setRecords(transformedData);
-      setFilteredRecords(transformedData);
+      setRecords(formattedRecords);
+      setFilteredRecords(formattedRecords);
     }
+    setLoading(false);
   };
 
+  const handleSearch = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
+
+    const filtered = records.filter((record) =>
+      record.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.tags.some(tag => 
+        tag.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+    setFilteredRecords(filtered);
+  };
+
+  const handleAddRecord = async (record: Record) => {
+    await loadRecords();
+    setShowAddRecord(false);
+  };
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Please sign in to access this page</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen text-black">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <UserDetails />
-          <button 
-            onClick={() => setShowAddRecord(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Add Record
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowUpload(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Upload PDF
+            </button>
+            
+            <button 
+              onClick={() => setShowAddRecord(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Record
+            </button>
+          </div>
         </div>
 
-        {/* View Mode Toggles */}
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setViewMode('machine')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               viewMode === 'machine' 
                 ? 'bg-gray-800 text-white' 
                 : 'bg-white text-gray-800'
@@ -88,7 +128,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setViewMode('tag')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-colors ${
               viewMode === 'tag' 
                 ? 'bg-gray-800 text-white' 
                 : 'bg-white text-gray-800'
@@ -98,35 +138,38 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Search Bar */}
         <div className="mb-6">
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        {/* Records List */}
-        <MachineList 
-          records={searchResults.map(record => ({
-            ...record,
-            tags: record.tags.map(tagName => ({
-              recordId: record.id,
-              tagId: `tag-${tagName}`,
-              tag: { name: tagName }
-            }))
-          }))} 
-          viewMode={viewMode}
-        /> {/* Fixed prop name */}
+        {loading ? (
+          <SkeletonLoader />
+        ) : (
+          <MachineList 
+            records={filteredRecords.map(record => ({
+              ...record,
+              tags: record.tags.map(tagName => ({
+                recordId: record.id,
+                tagId: `tag-${tagName}`,
+                tag: { name: tagName }
+              }))
+            }))} 
+            viewMode={viewMode}
+          />
+        )}
 
-        {/* Add Record Modal */}
         {showAddRecord && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Add New Record</h2>
                 <button 
                   onClick={() => setShowAddRecord(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  ✕
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
               <AddRecordForm 
@@ -139,6 +182,39 @@ export default function Dashboard() {
                 }}
                 onCancel={() => setShowAddRecord(false)}
               />
+            </div>
+          </div>
+        )}
+        {showUpload && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Upload PDF Document</h2>
+                <button 
+                  onClick={() => setShowUpload(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <PdfUpload
+                    value=""
+                    onChange={(url) => {
+                      // Handle the uploaded PDF URL
+                      console.log('PDF uploaded:', url);
+                      setShowUpload(false);
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  Click to upload or drag and drop your PDF file here
+                </p>
+              </div>
             </div>
           </div>
         )}

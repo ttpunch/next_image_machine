@@ -114,12 +114,12 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
             type="file"
             accept="image/*"
             onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
-            className="hidden"
+            className="hidden text-black"
             id="image-upload"
           />
           <label
             htmlFor="image-upload"
-            className="w-full aspect-square border rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-700"
+            className="w-full aspect-square border rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-700 text-black"
           >
             {formData.image ? (
               <img
@@ -128,7 +128,7 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 className="w-full h-full object-cover rounded-lg"
               />
             ) : (
-              <div className="text-black bg-white w-full h-full flex items-center justify-center rounded-lg">
+              <div className="text-black bg-white w-full h-full flex items-center justify-center rounded-lg ">
                 Add Image
               </div>
             )}
