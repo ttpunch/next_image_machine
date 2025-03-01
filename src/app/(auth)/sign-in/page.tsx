@@ -32,22 +32,14 @@ export default function SignIn() {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error) {
+    } catch (err) {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await signIn("google", { callbackUrl: "/dashboard" });
-    } catch (error) {
-      setError("Failed to sign in with Google");
-      setLoading(false);
-    }
-  };
+  // We'll remove the unused Google sign-in function since it's not being used
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -60,8 +52,6 @@ export default function SignIn() {
             Sign in to your account to continue
           </p>
         </div>
-
-       
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -138,7 +128,7 @@ export default function SignIn() {
 
         <div className="text-sm text-center mt-6">
           <p className="text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
               Sign up
             </Link>
