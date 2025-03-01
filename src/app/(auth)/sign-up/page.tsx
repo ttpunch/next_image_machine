@@ -53,8 +53,12 @@ export default function SignUp() {
       
       // Redirect to sign-in page on success
       router.push('/sign-in');
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }

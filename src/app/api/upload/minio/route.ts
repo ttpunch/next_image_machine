@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Client as MinioClient } from 'minio';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+
 
 // Initialize MinIO client with more detailed configuration
 const minioClient = new MinioClient({
@@ -83,24 +83,15 @@ export async function POST(request: NextRequest) {
       fileName: file.name
     });
     
-  } catch (error: any) {
-    console.error('Error details:', error);
+  } catch (error: unknown) {
+    console.error('Upload error:', error);
     
-    // More detailed error information
-    if (error.code) {
-      console.error('Error code:', error.code);
-    }
-    
-    if (error.message) {
-      console.error('Error message:', error.message);
-    }
-    
-    if (error.stack) {
-      console.error('Error stack:', error.stack);
-    }
-    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Failed to upload file';
+      
     return NextResponse.json(
-      { message: `Error uploading file: ${error.message}` },
+      { error: errorMessage },
       { status: 500 }
     );
   }

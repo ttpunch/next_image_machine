@@ -45,8 +45,13 @@ export async function POST(request: NextRequest) {
     
   } catch (error: any) {
     console.error('Error deleting file:', error);
+    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Failed to delete file';
+      
     return NextResponse.json(
-      { message: `Error deleting file: ${error.message}` },
+      { error: errorMessage },
       { status: 500 }
     );
   }
