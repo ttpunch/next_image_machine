@@ -5,11 +5,16 @@ export default function UserDetails() {
 
   if (!session) return null;
   console.log(session);
+  
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/sign-in' });
+  };
+  
   return (
     <div className="flex items-center gap-4">
-      <span className="font-bold">{session.user.username} Looged in </span>
+      <span className="font-bold">{session.user.email} Looged in </span>
       <button
-        onClick={() => signOut()}
+        onClick={handleSignOut}
         className="px-4 py-1 border rounded-lg hover:bg-gray-700"
       >
         Logout

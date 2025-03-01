@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 interface GoogleDriveUploadProps {
-  onChange: (value: string) => void;
+  onChange: (value: string, fileName: string) => void;
   value: string;
 }
 
@@ -158,7 +158,7 @@ export default function GoogleDriveUpload({ onChange, value }: GoogleDriveUpload
         const result = await response.json();
         const fileUrl = `https://drive.google.com/file/d/${result.id}/view`;
         console.log("File uploaded successfully:", fileUrl);
-        onChange(fileUrl);
+        onChange(fileUrl, file.name);
       } catch (error: any) {
         console.error("Upload error:", error);
         setError("Upload failed: " + (error.message || "Unknown error"));

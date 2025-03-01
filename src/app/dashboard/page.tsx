@@ -8,8 +8,10 @@ import AddRecordForm from '../components/AddRecordForm';
 import UserDetails from '../components/UserDetails';
 import SkeletonLoader from '../components/SkeletonLoader';
 import PdfUpload from '../components/PdfUpload';
+import MinioUpload from '../components/MinioUpload';
+import Link from 'next/link';
 
-import GoogleDriveUpload from '../components/GoogleDriveUpload';
+
 
 interface Record {
   id: string;
@@ -20,13 +22,24 @@ interface Record {
   createdOn: string;
 }
 
+// Add this interface near the top with other interfaces
+interface UploadedFile {
+  name: string;
+  url: string;
+  uploadedAt: string;
+}
+
 export default function Dashboard() {
+  // Add this state
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
   const { data: session, status } = useSession();
   const [records, setRecords] = useState<Record[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
   const [viewMode, setViewMode] = useState<'machine' | 'tag'>('machine');
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +55,7 @@ export default function Dashboard() {
     if (result.success && result.data) {
       const formattedRecords = result.data.map(record => ({
         ...record,
-        tags: record.tags.map(tag => 
+        tags: record.tags.map(tag =>
           typeof tag === 'object' ? tag.tag.name : tag
         )
       }));
@@ -61,7 +74,7 @@ export default function Dashboard() {
     const filtered = records.filter((record) =>
       record.machineNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.tags.some(tag => 
+      record.tags.some(tag =>
         tag.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -89,9 +102,7 @@ export default function Dashboard() {
     );
   }
 
-  function setPdfUrl(url: string) {
-    throw new Error('Function not implemented.');
-  }
+
 
   return (
     <div className="min-h-screen text-black">
@@ -99,7 +110,7 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-6">
           <UserDetails />
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => setShowUpload(true)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
             >
@@ -108,8 +119,19 @@ export default function Dashboard() {
               </svg>
               Upload PDF
             </button>
-            
-            <button 
+
+            {/* Add this new link */}
+            <Link
+              href="/uploads"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              View Uploads
+            </Link>
+
+            <button
               onClick={() => setShowAddRecord(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
@@ -124,21 +146,19 @@ export default function Dashboard() {
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setViewMode('machine')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              viewMode === 'machine' 
-                ? 'bg-gray-800 text-white' 
+            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'machine'
+                ? 'bg-gray-800 text-white'
                 : 'bg-white text-gray-800'
-            }`}
+              }`}
           >
             Machine Wise
           </button>
           <button
             onClick={() => setViewMode('tag')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              viewMode === 'tag' 
-                ? 'bg-gray-800 text-white' 
+            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'tag'
+                ? 'bg-gray-800 text-white'
                 : 'bg-white text-gray-800'
-            }`}
+              }`}
           >
             Tag Wise
           </button>
@@ -151,7 +171,7 @@ export default function Dashboard() {
         {loading ? (
           <SkeletonLoader />
         ) : (
-          <MachineList 
+          <MachineList
             records={filteredRecords.map(record => ({
               ...record,
               tags: record.tags.map(tagName => ({
@@ -159,17 +179,19 @@ export default function Dashboard() {
                 tagId: `tag-${tagName}`,
                 tag: { name: tagName }
               }))
-            }))} 
+            }))}
             viewMode={viewMode}
           />
+
         )}
+        
 
         {showAddRecord && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Add New Record</h2>
-                <button 
+                <button
                   onClick={() => setShowAddRecord(false)}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
                 >
@@ -178,7 +200,7 @@ export default function Dashboard() {
                   </svg>
                 </button>
               </div>
-              <AddRecordForm 
+              <AddRecordForm
                 onSubmit={(record) => {
                   const transformedRecord = {
                     ...record,
@@ -191,16 +213,16 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        // Add state for PDF URL
-        const [pdfUrl, setPdfUrl] = useState('');
 
-        // Update the upload modal content
+
+
+
         {showUpload && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Upload PDF Document</h2>
-                <button 
+                <button
                   onClick={() => setShowUpload(false)}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
                 >
@@ -209,13 +231,13 @@ export default function Dashboard() {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to Cloudinary</h3>
                   <div className="flex justify-center">
                     <PdfUpload
-                      value=""
+                      value={pdfUrl}
                       onChange={(url) => {
                         setPdfUrl(url);
                         console.log('PDF uploaded to Cloudinary:', url);
@@ -225,23 +247,29 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                {/* Add MinioUpload component */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to Google Drive</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to MinIO Storage</h3>
                   <div className="flex justify-center">
-                    <GoogleDriveUpload
-                      value=""
-                      onChange={(url) => {
-                        setPdfUrl(url);
-                        console.log('PDF uploaded to Google Drive:', url);
+                    <MinioUpload
+                      acceptedFileTypes=".pdf"
+                      maxSizeMB={10}
+                      onUploadComplete={(fileUrl, fileName) => {
+                        setPdfUrl(fileUrl);
+                        setUploadedFiles(prev => [
+                          {
+                            name: fileName,
+                            url: fileUrl,
+                            uploadedAt: new Date().toISOString()
+                          },
+                          ...prev
+                        ]);
+                        console.log('PDF uploaded to MinIO:', fileUrl);
                         setShowUpload(false);
                       }}
                     />
                   </div>
                 </div>
-
-                <p className="text-sm text-gray-500 text-center">
-                  Choose your preferred upload method
-                </p>
               </div>
             </div>
           </div>

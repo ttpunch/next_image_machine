@@ -13,6 +13,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
+    pathname.startsWith('/minioupload') ||
     PUBLIC_FILE.test(pathname)
   ) {
     return NextResponse.next();

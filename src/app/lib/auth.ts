@@ -3,9 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
 
-
 export const authOptions: NextAuthOptions = {
   providers: [
+   
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -49,19 +49,33 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.username = user.username;
         token.role = user.role;
       }
+      // Add Google OAuth tokens to JWT
+      if (account && account.provider === 'google') {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.provider = 'google';
+      }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any, token: any }) {
       if (token) {
-        session.user.id = token.id;
-        session.user.username = token.username;
-        session.user.role = token.role;
+        if (session.user) {
+          session.user.id = token.id as string;
+          session.user.username = token.username as string;
+          session.user.role = token.role as string;
+        }
+        // Add Google OAuth tokens to session
+        if (token.provider === 'google') {
+          session.accessToken = token.accessToken as string;
+          session.refreshToken = token.refreshToken as string;
+          session.provider = token.provider;
+        }
       }
       return session;
     }

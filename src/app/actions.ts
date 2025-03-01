@@ -5,6 +5,9 @@ import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from './api/auth/[...nextauth]/route';
 
+import { google } from 'googleapis';
+import oauth2Client from '../utils/google-oauth';
+
 interface CreateRecordInput {
   machineNumber: string;
   description: string;
@@ -273,6 +276,71 @@ export async function deleteRecord(recordId: string) {
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to delete record'
+    };
+  }
+}
+
+// Add this new function at the end of the file
+interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink: string;
+  createdTime: string;
+  category: string;
+}
+
+export async function fetchDriveFiles() {
+  try {
+    const session = await getServerSession(authOptions);
+    console.log('session', session);
+    
+    if (!session?.user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    if (!session.accessToken) {
+      return { success: false, error: 'Google Drive access token not available' };
+    }
+
+    // Create a new OAuth2 client for each request
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.NEXTAUTH_URL
+    );
+
+    // Set credentials directly from session
+    oauth2Client.setCredentials({
+      access_token: session.accessToken,
+      // Only set refresh token if available
+      ...(session.refreshToken && { refresh_token: session.refreshToken })
+    });
+
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    
+    const response = await drive.files.list({
+      q: "mimeType='application/pdf'",
+      fields: 'files(id, name, mimeType, webViewLink, createdTime, description)',
+      orderBy: 'createdTime desc',
+      pageSize: 100
+    });
+
+    const files = (response.data.files || []).map(file => ({
+      id: file.id || '',
+      name: file.name || '',
+      mimeType: file.mimeType || 'application/pdf',
+      webViewLink: `https://drive.google.com/file/d/${file.id}/view`,
+      createdTime: file.createdTime || new Date().toISOString(),
+      category: file.description || 'uncategorized'
+    }));
+
+    return { success: true, data: files };
+  } catch (error) {
+    console.error('Error fetching drive files:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to fetch drive files'
     };
   }
 }
