@@ -1,10 +1,8 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import SearchBar from '../components/SearchBar';
 import MachineList from '../components/MachineList';
 import AddRecordForm from '../components/AddRecordForm';
-import UserDetails from '../components/UserDetails';
 
 interface Record {
   id: string;

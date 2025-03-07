@@ -281,7 +281,18 @@ export async function deleteRecord(recordId: string) {
 }
 
 // Add this new function at the end of the file
-interface DriveFile {
+// Either remove the interface if not used elsewhere:
+// interface DriveFile {
+//   id: string;
+//   name: string;
+//   mimeType: string;
+//   webViewLink: string;
+//   createdTime: string;
+//   category: string;
+// }
+
+// Or export it if it's used in other files:
+export interface DriveFile {
   id: string;
   name: string;
   mimeType: string;

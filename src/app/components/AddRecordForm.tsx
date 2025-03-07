@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { createRecord, fetchRecentTags } from '../actions';
+import Image from 'next/image';
 
 // Update the Record interface to match the one in page.tsx
 interface Record {
@@ -170,11 +171,22 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
               >
                 {formData.image ? (
                   <div className="relative w-full h-full">
+                    // Change this:
                     <img
                       src={URL.createObjectURL(formData.image)}
                       alt="Preview"
                       className="w-full h-full object-cover rounded-lg"
                     />
+                    
+                    // To this:
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={URL.createObjectURL(formData.image)}
+                        alt="Preview"
+                        fill
+                        className="object-cover rounded-lg"
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                       <span className="text-white text-sm font-medium">Change Image</span>
                     </div>

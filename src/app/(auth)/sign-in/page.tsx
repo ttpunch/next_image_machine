@@ -33,9 +33,8 @@ export default function SignIn() {
         router.refresh();
       }
     } catch (err) {
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
+      console.error('Login failed:', err);
+      setError('Invalid credentials');
     }
   };
 
