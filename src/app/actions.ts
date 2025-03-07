@@ -344,3 +344,56 @@ export async function fetchDriveFiles() {
     };
   }
 }
+
+export async function fetchRecentTags(limit = 5) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    // Get the most frequently used tags for this user
+    const tags = await prisma.tag.findMany({
+      where: {
+        records: {  // Changed to match the schema relation name
+          some: {
+            record: {
+              createdBy: session.user.id
+            }
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            records: true  // Changed to match the schema relation name
+          }
+        }
+      },
+      orderBy: [
+        { records: { _count: 'desc' } },  // Changed to match the schema relation name
+        { name: 'asc' }
+      ],
+      take: limit
+    });
+
+    return { 
+      success: true, 
+      data: tags.map(tag => ({
+        id: tag.id,
+        name: tag.name,
+        count: tag._count.records  // Changed to match the schema relation name
+      }))
+    };
+
+  } catch (error) {
+    console.error('Error fetching recent tags:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to fetch recent tags'
+    };
+  }
+}

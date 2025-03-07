@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import MachineList from '@/app/components/MachineList';
 import AddRecordForm from '@/app/components/AddRecordForm';
 import SearchBar from '@/app/components/SearchBar';
@@ -24,6 +25,7 @@ interface Record {
 
 export default function Home() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [records, setRecords] = useState<Record[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<Record[]>([]);
   const [viewMode, setViewMode] = useState<'machine' | 'tag'>('machine');
@@ -32,8 +34,10 @@ export default function Home() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetchRecords();
+    } else if (status === 'unauthenticated') {
+      router.push('/sign-in');
     }
-  }, [status]);
+  }, [status, router]);
 
   const fetchRecords = async () => {
     try {
@@ -72,9 +76,7 @@ export default function Home() {
     return <div>Loading...</div>;
   }
 
-  if (status === 'unauthenticated') {
-    return <div>Please log in to view this page.</div>;
-  }
+  // Remove the unauthenticated check since we're redirecting in useEffect
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-6">
