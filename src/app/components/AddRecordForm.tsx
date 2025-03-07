@@ -37,14 +37,22 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [recentTags, setRecentTags] = useState<Array<{id: string, name: string, count: number}>>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
 
   // Fetch recent tags when component mounts
   useEffect(() => {
     const getRecentTags = async () => {
       if (status === 'authenticated') {
-        const result = await fetchRecentTags(5);
-        if (result.success && result.data) {
-          setRecentTags(result.data);
+        setIsLoadingTags(true);
+        try {
+          const result = await fetchRecentTags(5);
+          if (result.success && result.data) {
+            setRecentTags(result.data);
+          }
+        } catch (error) {
+          console.error('Error fetching tags:', error);
+        } finally {
+          setIsLoadingTags(false);
         }
       }
     };
@@ -234,25 +242,36 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
               />
               
-              {recentTags.length > 0 ? (
-                <div className="mt-2">
-                  <p className="text-xs text-gray-500 mb-1">Recent tags:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {recentTags.map((tag) => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => addTag(tag.name)}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200 transition-colors"
-                      >
-                        {tag.name}
-                      </button>
-                    ))}
+              <div className="mt-2">
+                {isLoadingTags ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-pulse flex space-x-1">
+                      <div className="h-5 w-12 bg-gray-200 rounded"></div>
+                      <div className="h-5 w-16 bg-gray-200 rounded"></div>
+                      <div className="h-5 w-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <span className="text-xs text-gray-500">Loading tags...</span>
                   </div>
-                </div>
-              ) : (
-                <p className="mt-1 text-xs text-gray-500">Example: maintenance, repair, inspection</p>
-              )}
+                ) : recentTags.length > 0 ? (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Recent tags:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {recentTags.map((tag) => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => addTag(tag.name)}
+                          className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200 transition-colors"
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500">No recent tags found</p>
+                )}
+              </div>
             </div>
             
             <div className="flex justify-end space-x-3 pt-4">
