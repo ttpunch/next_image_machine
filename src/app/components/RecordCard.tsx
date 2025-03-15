@@ -72,11 +72,15 @@ export default function RecordCard({ record }: RecordProps) {
 
           {/* Content Section */}
           <div className="flex-1">
-            <textarea 
-              readOnly 
-              value={record.description}
-              className="w-full min-h-[120px] sm:min-h-[150px] p-3 border border-gray-200 rounded-lg bg-gray-50/50 text-gray-700 focus:ring-0"
-            />
+            {/* Replace textarea with a div that renders HTML content */}
+            <div 
+              className="w-full min-h-[120px] sm:min-h-[150px] p-3 border border-gray-200 rounded-lg bg-gray-50/50 text-gray-700 overflow-auto"
+            >
+              <div 
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: record.description }}
+              />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 sm:gap-3 mt-3 sm:mt-4">

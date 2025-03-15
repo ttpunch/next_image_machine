@@ -11,6 +11,7 @@ import MinioUpload from '../components/MinioUpload';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from "@/components/ui/card";
+import dynamic from 'next/dynamic';
 
 
 
@@ -30,6 +31,14 @@ interface UploadedFile {
   uploadedAt: string;
 }
 
+// Dynamically import the QuillEditor to avoid SSR issues
+const QuillEditor = dynamic(() => import('../components/QuillEditor'), { 
+  ssr: false,
+  loading: () => <div className="min-h-[200px] bg-gray-100 animate-pulse rounded-md"></div>
+});
+
+
+
 export default function Dashboard() {
   // Add this state
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -41,6 +50,7 @@ export default function Dashboard() {
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [noteContent, setNoteContent] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
 
@@ -250,7 +260,6 @@ export default function Dashboard() {
                 <div className="space-y-6">
                   {/* MinioUpload component */}
                   <div>
-                    {/* Remove this duplicate heading */}
                     <div className="flex justify-center">
                       <MinioUpload
                         acceptedFileTypes=".pdf"
@@ -271,6 +280,28 @@ export default function Dashboard() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Rich Text Editor for Notes */}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Add Notes</h3>
+                    <QuillEditor 
+                      value={noteContent}
+                      onChange={setNoteContent}
+                      placeholder="Add notes about this document..."
+                    />
+                  </div>
+                  
+                  {/* Save Button */}
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      console.log('Saving document with notes:', { pdfUrl, notes: noteContent });
+                      // Here you would typically save the document and notes to your database
+                      setShowUpload(false);
+                    }}
+                  >
+                    Save Document
+                  </Button>
                 </div>
               </CardContent>
             </Card>

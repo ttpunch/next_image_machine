@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import { updateRecord } from '../actions';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the QuillEditor to avoid SSR issues
+const QuillEditor = dynamic(() => import('./QuillEditor'), { 
+  ssr: false,
+  loading: () => <div className="min-h-[200px] bg-gray-100 animate-pulse rounded-md"></div>
+});
 
 interface EditRecordProps {
   record: {
@@ -53,8 +60,8 @@ export default function EditRecord({ record, onClose, onUpdate }: EditRecordProp
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl max-w-2xl w-full mx-4">
-        <div className="p-6 border-b flex justify-between items-center">
+      <div className="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center z-10">
           <h2 className="text-xl font-semibold">Edit Record</h2>
           <button 
             onClick={onClose}
@@ -84,11 +91,10 @@ export default function EditRecord({ record, onClose, onUpdate }: EditRecordProp
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
-            <textarea
+            <QuillEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border rounded-lg min-h-[100px]"
-              required
+              onChange={setDescription}
+              placeholder="Enter machine description..."
             />
           </div>
 

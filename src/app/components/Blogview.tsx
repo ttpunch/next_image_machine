@@ -121,8 +121,9 @@ export default function BlogView({ recordId, onClose }: BlogViewProps) {
             </div>
           )}
 
-          <div className="prose max-w-none">
-            <p className="text-lg leading-relaxed">{record.description}</p>
+          {/* Replace plain text paragraph with rich text renderer */}
+          <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
+            <div dangerouslySetInnerHTML={{ __html: record.description }} />
           </div>
 
           <div className="flex flex-wrap gap-2">

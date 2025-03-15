@@ -1,9 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createRecord } from '../actions';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
-import { createRecord, fetchRecentTags } from '../actions';
+import {  fetchRecentTags } from '../actions';
 import Image from 'next/image';
+
+// Dynamically import the QuillEditor to avoid SSR issues
+const QuillEditor = dynamic(() => import('./QuillEditor'), { 
+  ssr: false,
+  loading: () => <div className="min-h-[200px] bg-gray-100 animate-pulse rounded-md"></div>
+});
+
+
 
 // Update the Record interface to match the one in page.tsx
 interface Record {
@@ -219,18 +229,17 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                placeholder="Enter detailed description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={5}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
-                required
-              />
+              {/* Replace the description textarea with QuillEditor */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <QuillEditor
+                  value={formData.description}
+                  onChange={(value) => setFormData({ ...formData, description: value })}
+                  placeholder="Enter machine description..."
+                />
+              </div>
             </div>
 
             <div>
