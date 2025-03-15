@@ -15,7 +15,7 @@ export default function UserDetails() {
       <span className="font-bold">{session.user.email} Looged in </span>
       <button
         onClick={handleSignOut}
-        className="px-4 py-1 border rounded-lg hover:bg-gray-700"
+        className="px-4 py-1 border rounded-lg hover:bg-gray-700 hover:text-white"
       >
         Logout
       </button>
