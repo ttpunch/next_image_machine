@@ -10,6 +10,8 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import PdfUpload from '../components/PdfUpload';
 import MinioUpload from '../components/MinioUpload';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
 
 
@@ -96,8 +98,20 @@ export default function Dashboard() {
 
   if (status === 'unauthenticated') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Please sign in to access this page</div>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Access Required</CardTitle>
+            <CardDescription className="text-center">
+              Please sign in to access the dashboard and manage your records.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button asChild className="w-full" size="lg">
+              <Link href="/api/auth/signin">Sign In</Link>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }

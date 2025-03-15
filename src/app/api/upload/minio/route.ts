@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client as MinioClient } from 'minio';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-
 
 // Initialize MinIO client with more detailed configuration
 const minioClient = new MinioClient({
@@ -52,22 +49,13 @@ export async function POST(request: NextRequest) {
     const uniqueFileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     console.log('Generated unique filename:', uniqueFileName);
     
-    // Create temp directory if it doesn't exist
-    const tempDir = join(process.cwd(), 'tmp');
-    await mkdir(tempDir, { recursive: true });
-    console.log('Temp directory created/verified:', tempDir);
-    
-    // Save file temporarily
-    const tempFilePath = join(tempDir, uniqueFileName);
-    console.log('Saving file temporarily to:', tempFilePath);
+    // Get file buffer directly from the file
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(tempFilePath, buffer);
-    console.log('File saved temporarily');
     
-    // Upload to MinIO
-    console.log('Uploading to MinIO...');
-    await minioClient.fPutObject(BUCKET_NAME, uniqueFileName, tempFilePath, {
+    // Upload to MinIO directly from memory
+    console.log('Uploading to MinIO from memory...');
+    await minioClient.putObject(BUCKET_NAME, uniqueFileName, buffer, buffer.length, {
       'Content-Type': file.type,
     });
     console.log('File uploaded to MinIO successfully');
