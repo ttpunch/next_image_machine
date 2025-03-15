@@ -7,11 +7,10 @@ import MachineList from '../components/MachineList';
 import AddRecordForm from '../components/AddRecordForm';
 import UserDetails from '../components/UserDetails';
 import SkeletonLoader from '../components/SkeletonLoader';
-import PdfUpload from '../components/PdfUpload';
 import MinioUpload from '../components/MinioUpload';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from "@/components/ui/card";
 
 
 
@@ -232,59 +231,49 @@ export default function Dashboard() {
 
         {showUpload && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Upload PDF Document</h2>
-                <button
-                  onClick={() => setShowUpload(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to Cloudinary</h3>
-                  <div className="flex justify-center">
-                    <PdfUpload
-                      value={pdfUrl}
-                      onChange={(url) => {
-                        setPdfUrl(url);
-                        console.log('PDF uploaded to Cloudinary:', url);
-                        setShowUpload(false);
-                      }}
-                    />
+            <Card className="max-w-md w-full mx-4">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>Upload PDF Document</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setShowUpload(false)}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* MinioUpload component */}
+                  <div>
+                    {/* Remove this duplicate heading */}
+                    <div className="flex justify-center">
+                      <MinioUpload
+                        acceptedFileTypes=".pdf"
+                        maxSizeMB={10}
+                        onUploadComplete={(fileUrl, fileName) => {
+                          setPdfUrl(fileUrl);
+                          setUploadedFiles(prev => [
+                            {
+                              name: fileName,
+                              url: fileUrl,
+                              uploadedAt: new Date().toISOString()
+                            },
+                            ...prev
+                          ]);
+                          console.log('PDF uploaded to MinIO:', fileUrl);
+                          setShowUpload(false);
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-
-                {/* Add MinioUpload component */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Upload to MinIO Storage</h3>
-                  <div className="flex justify-center">
-                    <MinioUpload
-                      acceptedFileTypes=".pdf"
-                      maxSizeMB={10}
-                      onUploadComplete={(fileUrl, fileName) => {
-                        setPdfUrl(fileUrl);
-                        setUploadedFiles(prev => [
-                          {
-                            name: fileName,
-                            url: fileUrl,
-                            uploadedAt: new Date().toISOString()
-                          },
-                          ...prev
-                        ]);
-                        console.log('PDF uploaded to MinIO:', fileUrl);
-                        setShowUpload(false);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
