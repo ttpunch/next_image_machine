@@ -13,14 +13,18 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^6.3.1",
+    "@radix-ui/react-slot": "^1.1.2",
     "@react-oauth/google": "^0.12.1",
     "@types/gapi": "^0.0.47",
     "@types/gapi.client.drive": "^3.0.15",
     "bcryptjs": "^3.0.0",
+    "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.5.1",
+    "clsx": "^2.1.1",
     "googleapis": "^144.0.0",
     "imagekit": "^6.0.0",
     "imagekitio-next": "^1.0.1",
+    "lucide-react": "^0.482.0",
     "minio": "^8.0.4",
     "next": "15.1.7",
     "next-auth": "^4.24.11",
@@ -28,6 +32,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.0.0",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

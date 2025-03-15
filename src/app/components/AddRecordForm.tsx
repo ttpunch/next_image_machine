@@ -171,14 +171,6 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
               >
                 {formData.image ? (
                   <div className="relative w-full h-full">
-                    // Change this:
-                    <img
-                      src={URL.createObjectURL(formData.image)}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    
-                    // To this:
                     <div className="relative w-full h-full">
                       <Image
                         src={URL.createObjectURL(formData.image)}

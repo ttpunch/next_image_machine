@@ -5,14 +5,16 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // Initialize MinIO client
 const minioClient = new MinioClient({
-  endPoint: '192.168.29.193',
+  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
   port: 9000,
   useSSL: false,
-  accessKey: 'ZJiVVzvnOo2bv3p9MJ2G',
-  secretKey: 'TwgeKY8vM5ShYgulpwPLepEDPTmmdArCZA9v9eXu'
+  accessKey: process.env.MINIO_ACCESS_KEY ||"",
+  secretKey: process.env.MINIO_SECRET_KEY ||"",
+  pathStyle: true,  // Use path style instead of virtual hosted style
+  region: 'us-east-1'  // Specify a region
 });
 
-const BUCKET_NAME = 'pdf';
+const BUCKET_NAME = 'pdfupload';
 
 export async function GET(request: NextRequest) {
   try {
