@@ -19,7 +19,7 @@ export default function SearchBar({ onSearch }: { onSearch: (term: string) => vo
       />
       <button 
         onClick={handleSubmit}
-        className="px-6 py-2 border rounded-lg hover:bg-gray-700"
+        className="px-6 py-2 border rounded-lg hover:bg-gray-700 hover:text-white"
       >
         submit
       </button>
