@@ -145,7 +145,7 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg overflow-scroll">
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
@@ -161,7 +161,7 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-6 p-6">
+      <form onSubmit={handleSubmit} className="space-y-6 p-6 overflow-x-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left column - Image upload */}
           <div className="md:col-span-1">

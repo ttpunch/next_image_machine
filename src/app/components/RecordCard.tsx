@@ -65,9 +65,7 @@ export default function RecordCard({ record }: RecordProps) {
                 </div>
               )}
             </div>
-            <div className="mt-2 text-center text-sm font-medium text-gray-600">
-              Machine #{record.machineNumber}
-            </div>
+         
           </div>
 
           {/* Content Section */}
