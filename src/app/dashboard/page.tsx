@@ -210,9 +210,9 @@ export default function Dashboard() {
 
         {showAddRecord && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Add New Record</h2>
+            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white p-4 sm:p-6 border-b flex justify-between items-center z-10">
+                <h2 className="text-lg sm:text-xl font-semibold">Add New Record</h2>
                 <button
                   onClick={() => setShowAddRecord(false)}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -222,16 +222,18 @@ export default function Dashboard() {
                   </svg>
                 </button>
               </div>
-              <AddRecordForm
-                onSubmit={(record) => {
-                  const transformedRecord = {
-                    ...record,
-                    tags: record.tags.map(tag => tag.tag.name)
-                  };
-                  handleAddRecord(transformedRecord);
-                }}
-                onCancel={() => setShowAddRecord(false)}
-              />
+              <div className="p-4 sm:p-6">
+                <AddRecordForm
+                  onSubmit={(record) => {
+                    const transformedRecord = {
+                      ...record,
+                      tags: record.tags.map(tag => tag.tag.name)
+                    };
+                    handleAddRecord(transformedRecord);
+                  }}
+                  onCancel={() => setShowAddRecord(false)}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -241,10 +243,10 @@ export default function Dashboard() {
 
         {showUpload && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <Card className="max-w-md w-full mx-4">
-              <CardHeader className="pb-2">
+            <Card className="max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <CardHeader className="pb-2 sticky top-0 bg-white z-10">
                 <div className="flex justify-between items-center">
-                  <CardTitle>Upload PDF Document</CardTitle>
+                  <CardTitle className="text-lg">Upload PDF Document</CardTitle>
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -257,7 +259,7 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* MinioUpload component */}
                   <div>
                     <div className="flex justify-center">
@@ -280,7 +282,6 @@ export default function Dashboard() {
                       />
                     </div>
                   </div>
-                                           
                 </div>
               </CardContent>
             </Card>
