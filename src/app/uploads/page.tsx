@@ -18,6 +18,13 @@ export default function UploadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  // Add search state
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Add filtered files computation
+  const filteredFiles = files.filter(file => 
+    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -104,10 +111,32 @@ export default function UploadsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Uploaded PDF Files</h1>
           <Link 
             href="/dashboard" 
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
           >
-            Back to Dashboard
+            <svg className="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="hidden xs:inline">Back to Dashboard</span>
+            <span className="xs:hidden">Back</span>
           </Link>
+        </div>
+
+        {/* Add search input */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <input
+              type="search"
+              className="block w-full p-3 pl-10 text-sm border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search PDF files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         {error && (
@@ -154,9 +183,25 @@ export default function UploadsPage() {
               </Link>
             </div>
           </div>
+        ) : filteredFiles.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No matching files</h3>
+            <p className="mt-1 text-sm text-gray-500">Try adjusting your search term.</p>
+            <div className="mt-6">
+              <button
+                onClick={() => setSearchTerm("")}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Clear Search
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {files.map((file, index) => (
+            {filteredFiles.map((file, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-center justify-center h-32 bg-gray-100 rounded-md mb-4">
@@ -203,6 +248,13 @@ export default function UploadsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {/* Add file count indicator */}
+        {files.length > 0 && (
+          <div className="mt-6 text-sm text-gray-500 text-right">
+            Showing {filteredFiles.length} of {files.length} files
           </div>
         )}
       </div>
