@@ -280,28 +280,7 @@ export default function Dashboard() {
                       />
                     </div>
                   </div>
-                  
-                  {/* Rich Text Editor for Notes */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-3">Add Notes</h3>
-                    <QuillEditor 
-                      value={noteContent}
-                      onChange={setNoteContent}
-                      placeholder="Add notes about this document..."
-                    />
-                  </div>
-                  
-                  {/* Save Button */}
-                  <Button 
-                    className="w-full" 
-                    onClick={() => {
-                      console.log('Saving document with notes:', { pdfUrl, notes: noteContent });
-                      // Here you would typically save the document and notes to your database
-                      setShowUpload(false);
-                    }}
-                  >
-                    Save Document
-                  </Button>
+                                           
                 </div>
               </CardContent>
             </Card>
