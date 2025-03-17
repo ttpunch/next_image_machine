@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRecord } from '../actions';
 import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
-import {  fetchRecentTags } from '../actions';
+import { fetchRecentTags } from '../actions';
 import Image from 'next/image';
 
 // Dynamically import the QuillEditor to avoid SSR issues
@@ -12,8 +12,6 @@ const QuillEditor = dynamic(() => import('./QuillEditor'), {
   ssr: false,
   loading: () => <div className="min-h-[200px] bg-gray-100 animate-pulse rounded-md"></div>
 });
-
-
 
 // Update the Record interface to match the one in page.tsx
 interface Record {
@@ -38,17 +36,31 @@ interface AddRecordFormProps {
 
 export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps) {
   const { data: session, status } = useSession();
-  const [formData, setFormData] = useState({
-    machineNumber: '',
-    description: '',
-    tags: '',
-    image: null as File | null,
-  });
+  const [machineNumber, setMachineNumber] = useState('');
+  const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [recentTags, setRecentTags] = useState<Array<{id: string, name: string, count: number}>>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(false);
+
+  // Update image preview URL when image changes
+  useEffect(() => {
+    if (image) {
+      const objectUrl = URL.createObjectURL(image);
+      setImagePreviewUrl(objectUrl);
+      
+      // Clean up the URL when component unmounts or image changes
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    } else {
+      setImagePreviewUrl(null);
+    }
+  }, [image]);
 
   // Fetch recent tags when component mounts
   useEffect(() => {
@@ -73,13 +85,18 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
 
   // Function to add a tag to the input
   const addTag = (tagName: string) => {
-    const currentTags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+    const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
     if (!currentTags.includes(tagName)) {
       const newTags = currentTags.length > 0 
-        ? `${formData.tags}, ${tagName}` 
+        ? `${tags}, ${tagName}` 
         : tagName;
-      setFormData({ ...formData, tags: newTags });
+      setTags(newTags);
     }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImage(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,9 +111,9 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
 
       // Handle image upload first if there's an image
       let imageUrl = '';
-      if (formData.image) {
+      if (image) {
         const imageData = new FormData();
-        imageData.append('file', formData.image);
+        imageData.append('file', image);
         
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
@@ -115,10 +132,10 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
       }
 
       const result = await createRecord({
-        machineNumber: formData.machineNumber,
-        description: formData.description,
-        tags: formData.tags,
-        imageUrl: imageUrl,
+        machineNumber,
+        description,
+        tags,
+        imageUrl,
         userId: ''
       });
 
@@ -126,12 +143,11 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
         throw new Error(result.error);
       }
 
-      setFormData({
-        machineNumber: '',
-        description: '',
-        tags: '',
-        image: null,
-      });
+      setMachineNumber('');
+      setDescription('');
+      setTags('');
+      setImage(null);
+      setImagePreviewUrl(null);
 
       if (result.data) {
         onSubmit(result.data as unknown as Record);
@@ -171,7 +187,7 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 type="file"
                 accept="image/*"
                 ref={fileInputRef}
-                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+                onChange={handleImageChange}
                 className="hidden"
                 id="image-upload"
               />
@@ -179,16 +195,13 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 htmlFor="image-upload"
                 className="w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 transition-colors bg-gray-50"
               >
-                {formData.image ? (
+                {imagePreviewUrl ? (
                   <div className="relative w-full h-full">
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={URL.createObjectURL(formData.image)}
-                        alt="Preview"
-                        fill
-                        className="object-cover rounded-lg"
-                      />
-                    </div>
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
                     <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                       <span className="text-white text-sm font-medium">Change Image</span>
                     </div>
@@ -221,25 +234,22 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 id="machine-number"
                 type="text"
                 placeholder="Enter machine number"
-                value={formData.machineNumber}
-                onChange={(e) => setFormData({ ...formData, machineNumber: e.target.value })}
+                value={machineNumber}
+                onChange={(e) => setMachineNumber(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
                 required
               />
             </div>
 
             <div>
-              {/* Replace the description textarea with QuillEditor */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <QuillEditor
-                  value={formData.description}
-                  onChange={(value) => setFormData({ ...formData, description: value })}
-                  placeholder="Enter machine description..."
-                />
-              </div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <QuillEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Enter machine description..."
+              />
             </div>
 
             <div>
@@ -250,8 +260,8 @@ export default function AddRecordForm({ onSubmit, onCancel }: AddRecordFormProps
                 id="tags"
                 type="text"
                 placeholder="Enter tags separated by commas"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-black"
               />
               
