@@ -69,19 +69,21 @@ export default function RecordCard({ record }: RecordProps) {
           </div>
 
           {/* Content Section */}
-          <div className="flex-1">
-            {/* Replace textarea with a div that renders HTML content */}
-            <div 
-              className="w-full min-h-[120px] sm:min-h-[150px] p-3 border border-gray-200 rounded-lg bg-gray-50/50 text-gray-700 overflow-auto"
-            >
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 max-h-52 overflow-y-auto">
+              {/* Replace textarea with a div that renders HTML content */}
               <div 
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: record.description }}
-              />
+                className="w-full min-h-[120px] sm:min-h-[150px] p-3 border border-gray-200 rounded-lg bg-gray-50/50 text-gray-700 overflow-auto"
+              >
+                <div 
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: record.description }}
+                />
+              </div>
             </div>
-
+            
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 mt-3 sm:mt-4">
+            <div className="mt-3 sm:mt-4 flex flex-wrap gap-2">
               <button 
                 onClick={() => setShowBlog(true)}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm"
@@ -90,7 +92,8 @@ export default function RecordCard({ record }: RecordProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <span className="sm:inline">View Details</span>
+                <span className="hidden sm:inline">View Details</span>
+                <span className="sm:hidden">View</span>
               </button>
               <button 
                 onClick={() => setShowEdit(true)}
@@ -99,7 +102,8 @@ export default function RecordCard({ record }: RecordProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                <span className="sm:inline">Edit</span>
+                <span className="hidden sm:inline">Edit</span>
+                <span className="sm:hidden">Edit</span>
               </button>
               <button 
                 onClick={handleDelete}
@@ -109,13 +113,14 @@ export default function RecordCard({ record }: RecordProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                <span className="sm:inline">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                <span className="hidden sm:inline">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                <span className="sm:hidden">{isDeleting ? '...' : 'Delete'}</span>
               </button>
             </div>
           </div>
 
           {/* Tags and Date Section */}
-          <div className="w-full sm:w-48">
+          <div className="w-full sm:w-48 flex flex-col">
             <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Tags</h4>
               <div className="flex flex-wrap gap-2">
@@ -129,7 +134,7 @@ export default function RecordCard({ record }: RecordProps) {
                 ))}
               </div>
             </div>
-            <div className="mt-4 sm:mt-20 text-xs text-right text-gray-500">
+            <div className="mt-auto pt-4 text-xs text-right text-gray-500">
               Created on: {new Date(record.createdOn).toLocaleDateString()}
             </div>
           </div>
