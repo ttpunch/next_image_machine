@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter, CardContent } from "@/components/ui/card";
 import dynamic from 'next/dynamic';
+import AlarmCalculator from '../components/AlarmCalculator';
 
 
 
@@ -51,7 +52,8 @@ export default function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [noteContent, setNoteContent] = useState<string>('');
-
+  const [showAlarmCalculator, setShowAlarmCalculator] = useState(false);
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -161,6 +163,16 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
               <span>Add Record</span>
+            </button>
+            
+            <button
+              onClick={() => setShowAlarmCalculator(true)}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-1 sm:gap-2"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span>Alarm Calculator</span>
             </button>
           </div>
         </div>
@@ -287,7 +299,30 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
+
+        {showAlarmCalculator && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white p-4 sm:p-6 border-b flex justify-between items-center z-10">
+                <h2 className="text-lg sm:text-xl font-semibold">Siemens Alarm Calculator</h2>
+                <button
+                  onClick={() => setShowAlarmCalculator(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-4 sm:p-6">
+                <AlarmCalculator />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+// Remove the commented out code at the bottom
